@@ -8,7 +8,7 @@ on:
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
@@ -16,19 +16,32 @@ jobs:
       - name: Set up JDK
         uses: actions/setup-java@v2
         with:
-          java-version: '11'
+          java-version: "17"
 
       - name: Build with Maven
-        run: mvn package
+        run: |
+          mvn clean
+          mvn package
 
-      - name: Copy JAR file
-        run: cp target/*.jar ${{ github.workspace }}/app.jar
-
-      - name: Deploy to server
-        uses: appleboy/scp-action@master
+      - name: ssh deploy aliyun
+        uses: cross-the-world/ssh-scp-ssh-pipelines@latest
+        env:
+          WELCOME: "ssh scp ssh pipelines"
+          LASTSSH: "Doing something after copying"
         with:
-          host: ${{ secrets.SERVER_HOST }}
-          username: ${{ secrets.SERVER_USERNAME }}
-          password: ${{ secrets.SERVER_PASSWORD }}
-          source: ${{ github.workspace }}/app.jar
-          target: /path/to/destination/app.jar
+          host: ${{ secrets.ALI_IP }} # 服务器的ip
+          user: ${{ secrets.ALI_NAME }} # 服务器的账号
+          pass: ${{ secrets.ALI_PWD }} # 服务器的密码
+          connect_timeout: 10s
+          first_ssh:
+            | #这部分是在服务器上，传输文件前执行的命令，关闭并删除运行中的旧版本
+            cd /root/hunyuan/vector-db-api
+            rm -rf main-old.jar
+            mv main.jar main-old.jar
+          scp:
+            | #将build生成的文件从GitHub服务器的相应目录，传到我服务器的相应目录
+            ./target/main.jar => /root/hunyuan/vector-db-api
+          last_ssh:
+            | #这部分是在服务器上，传输文件后执行的命令，新版本重新安装依赖并运行
+            pm2 restart vector-db-api
+            exit

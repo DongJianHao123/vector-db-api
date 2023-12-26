@@ -3,7 +3,9 @@ package demo.api.vectorDB.entity;
 import java.util.List;
 
 public class ImportFile {
+    private String id;
     private String path;
+    private String fileName;
     private String author;
     private List<String> tags;
 
@@ -13,6 +15,14 @@ public class ImportFile {
 
     public void setPath(String path) {
         this.path = path;
+    }
+
+    public String getFileName() {
+        return fileName;
+    }
+
+    public void setFileName(String fileName) {
+        this.fileName = fileName;
     }
 
     public String getAuthor() {
@@ -29,6 +39,14 @@ public class ImportFile {
 
     public void setTags(List<String> tags) {
         this.tags = tags;
+    }
+
+    public String getId() {
+        return id;
+    }
+
+    public void setId(String id) {
+        this.id = id;
     }
 
 }
