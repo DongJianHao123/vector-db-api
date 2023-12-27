@@ -6,6 +6,7 @@ public class ImportFile {
     private String id;
     private String path;
     private String fileName;
+    private String title;
     private String author;
     private List<String> tags;
 
@@ -47,6 +48,14 @@ public class ImportFile {
 
     public void setId(String id) {
         this.id = id;
+    }
+
+    public String getTitle() {
+        return title;
+    }
+
+    public void setTitle(String title) {
+        this.title = title;
     }
 
 }

@@ -19,9 +19,9 @@ public class VectorDBController {
     @Autowired
     private VectorDBService vectorDBService;
 
-    @PostMapping(value = "qury")
+    @PostMapping(value = "query")
     public ResponseEntity<Object> query(@RequestBody CollectionViewQo collectionViewQo) {
-        return ResponseEntity.ok(vectorDBService.accurateQury(collectionViewQo));
+        return ResponseEntity.ok(vectorDBService.accurateQuery(collectionViewQo));
     }
 
     @GetMapping(value = "get_all_files")
@@ -46,7 +46,11 @@ public class VectorDBController {
 
     @PostMapping(value = "remove_file")
     public ResponseEntity<Object> removeFile(@RequestBody ImportFile file) {
-        vectorDBService.removeFileById(file.getId());
+        if (file.getId() != null) {
+            vectorDBService.removeFileById(file.getId());
+        } else if (file.getFileName() != null) {
+            vectorDBService.removeFileByName(file.getFileName());
+        }
         return ResponseEntity.ok("success");
     }
 }

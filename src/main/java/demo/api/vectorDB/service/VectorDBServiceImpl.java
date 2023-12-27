@@ -38,14 +38,15 @@ import com.tencent.tcvectordb.model.param.enums.ReadConsistencyEnum;
 
 import demo.api.vectorDB.entity.CollectionViewQo;
 import demo.api.vectorDB.entity.ImportFile;
+import demo.api.vectorDB.entity.QueryType;
 
 @Service
 public class VectorDBServiceImpl implements VectorDBService {
 
     private VectorDBClient client;
 
-    private static String DB_NAME = "maodou";
-    private static String COLLECTION_NAME = "docs";
+    private static String DB_NAME = "os2edu";
+    private static String COLLECTION_NAME = "files";
 
     private AIDatabase db;
     private CollectionView collection;
@@ -65,32 +66,35 @@ public class VectorDBServiceImpl implements VectorDBService {
 
     private void initDB() {
         ConnectParam connectParam = ConnectParam.newBuilder()
-                .withUrl("http://lb-51myby0b-qhlfi29cxdrz7oty.clb.ap-beijing.tencentclb.com:40000")
+                .withUrl("http://lb-hod6qg6j-jn0axhu512bmgveo.clb.ap-beijing.tencentclb.com:40000")
                 .withUsername("root")
-                .withKey("pSmKvZHseHE5NiRKPZo4FuupGmADHrWl6xtFSPPB")
+                .withKey("RVZ2dhYTOFqy79eGd306a4qGiyyhWm2MbxV9FKw1")
                 .withTimeout(30)
                 .build();
         setClient(new VectorDBClient(connectParam, ReadConsistencyEnum.EVENTUAL_CONSISTENCY));
 
         this.db = this.client.aiDatabase(DB_NAME);
         this.collection = this.db.describeCollectionView(COLLECTION_NAME);
-        System.out.println("初始化db");
+        System.out.println("初始化vector-db");
         System.out.println(this.client.listDatabase());
     }
 
     @Override
-    public List<String> accurateQury(CollectionViewQo collectionViewQo) {
+    public List<String> accurateQuery(CollectionViewQo collectionViewQo) {
         String content = collectionViewQo.getContent();
-        String documentName = collectionViewQo.getDocumentName();
+        String filedVal = collectionViewQo.getFieldValue();
         Integer limit = collectionViewQo.getLimit();
+        Integer queryType = collectionViewQo.getQueryType();
         Builder paramBuilder = SearchByContentsParam.newBuilder()
                 .withSearchContentOption(SearchOption.newBuilder().withChunkExpand(Arrays.asList(1, 1)).build());
 
         if (content != "" && content != null) {
             paramBuilder.withContent(collectionViewQo.getContent());
         }
-        if (documentName != null && documentName != "") {
-            paramBuilder.withDocumentSetName(documentName);
+        if (queryType == QueryType.DOCUMENT_NAME.getVal()) {
+            paramBuilder.withDocumentSetName(filedVal);
+        } else if (queryType == QueryType.TITLE.getVal()) {
+            paramBuilder.withFilter("title=\"" + filedVal + "\"");
         }
         if (limit == null || limit <= 0) {
             limit = 3;
@@ -113,9 +117,16 @@ public class VectorDBServiceImpl implements VectorDBService {
                 .Build();
         // 配置文件 Meatdata 标量字段的值
         Map<String, Object> metaDataMap = new HashMap<>();
-        metaDataMap.put("author", file.getAuthor());
-        metaDataMap.put("tags", file.getTags());
-        // 调用 loadAndSplitText() 上传文件
+        if (file.getAuthor() != null) {
+            metaDataMap.put("author", file.getAuthor());
+        }
+        if (file.getTags() != null) {
+            metaDataMap.put("tags", file.getTags());
+        }
+        if (file.getTitle() != null) {
+            metaDataMap.put("title", file.getTitle());
+        }
+
         try {
             collection.loadAndSplitText(param, metaDataMap);
         } catch (Exception e) {
@@ -182,7 +193,7 @@ public class VectorDBServiceImpl implements VectorDBService {
         // 配置删除条件，以便检索需删除的文件
         CollectionViewConditionParam build = CollectionViewConditionParam
                 .newBuilder()
-                .withDocumentSetIds(id)
+                .withDocumentSetIds(Arrays.asList(id))
                 // .withFilter(new Filter("author=\"maodou\""))
                 .build();
         // 删除文件
@@ -194,9 +205,10 @@ public class VectorDBServiceImpl implements VectorDBService {
 
     @Override
     public void removeFileByName(String name) {
+        System.out.println(name);
         // 配置删除条件，以便检索需删除的文件
         CollectionViewConditionParam build = CollectionViewConditionParam
-                .newBuilder().withDocumentSetNames(name)
+                .newBuilder().withDocumentSetNames(Arrays.asList(name))
                 // .withFilter(new Filter("author=\"maodou\""))
                 .build();
         // 删除文件

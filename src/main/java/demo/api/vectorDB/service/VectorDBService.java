@@ -9,7 +9,7 @@ import demo.api.vectorDB.entity.CollectionViewQo;
 import demo.api.vectorDB.entity.ImportFile;
 
 public interface VectorDBService {
-    List<String> accurateQury(CollectionViewQo collectionViewQo);
+    List<String> accurateQuery(CollectionViewQo collectionViewQo);
 
     VectorDBClient getClient();
 
