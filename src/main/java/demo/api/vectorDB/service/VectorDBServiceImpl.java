@@ -101,10 +101,15 @@ public class VectorDBServiceImpl implements VectorDBService {
         }
 
         paramBuilder.withLimit(collectionViewQo.getLimit());
+        paramBuilder.withSearchContentOption(SearchOption.newBuilder().withChunkExpand(Arrays.asList(0, 0)).build());
+
         SearchByContentsParam searchByContentsParam = paramBuilder.build();
 
         List<SearchContentInfo> searchContentInfos = collection.search(searchByContentsParam);
-        List<String> res = searchContentInfos.stream().map(SearchContentInfo::getData).map(ContentInfo::getText)
+        List<String> res = searchContentInfos.stream()
+                .filter(s -> s.getScore() > 0.70)
+                .map(SearchContentInfo::getData)
+                .map(ContentInfo::getText)
                 .collect(Collectors.toList());
 
         return res;
